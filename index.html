@@ -33,18 +33,18 @@
   nav button.active{color:var(--navy);border-bottom-color:var(--red);font-weight:600;}
   nav button:hover{color:var(--navy);}
 
-  main{padding:20px 24px;max-width:1400px;margin:0 auto;}
+  main{padding:20px 24px;max-width:1500px;margin:0 auto;}
   .view{display:none;}
   .view.active{display:block;}
 
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:22px;}
   .kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;}
-  .kpi .num{font-size:26px;font-weight:700;color:var(--navy);}
+  .kpi .num{font-size:24px;font-weight:700;color:var(--navy);}
   .kpi .label{font-size:12px;color:var(--muted);margin-top:4px;}
 
   .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:wrap;}
   .toolbar .filters{display:flex;gap:8px;flex-wrap:wrap;}
-  select,input[type=text],input[type=number],input[type=date],textarea{
+  select,input[type=text],input[type=number],input[type=date],input[type=month],textarea{
     border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;font-family:inherit;background:#fff;color:var(--text);
   }
   textarea{width:100%;resize:vertical;}
@@ -52,7 +52,8 @@
   button.primary:hover{background:#b8121f;}
   button.secondary{background:#fff;border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:6px;font-size:13px;cursor:pointer;}
   button.secondary:hover{background:#f0f2f5;}
-  button.link{background:none;border:none;color:var(--navy);text-decoration:underline;cursor:pointer;font-size:12px;padding:0;}
+  button.danger{background:#fff;border:1px solid #f0c0c2;color:var(--red);padding:6px 10px;border-radius:6px;font-size:11px;cursor:pointer;}
+  button.danger:hover{background:#fbe3e5;}
 
   table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:13px;}
   thead th{background:#eef1f6;text-align:left;padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;color:var(--muted);border-bottom:1px solid var(--border);}
@@ -68,10 +69,12 @@
   .row-actions{display:flex;gap:6px;flex-wrap:wrap;}
   .row-actions button{font-size:11px;padding:5px 9px;}
   .empty{padding:30px;text-align:center;color:var(--muted);}
+  .num-cell{text-align:right;font-variant-numeric:tabular-nums;}
+  tfoot td{font-weight:700;background:#f7f8fa;border-top:2px solid var(--border);}
 
-  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(10,20,35,0.5);align-items:center;justify-content:center;z-index:100;}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(10,20,35,0.5);align-items:center;justify-content:center;z-index:100;overflow-y:auto;padding:30px 0;}
   .modal-overlay.active{display:flex;}
-  .modal{background:#fff;border-radius:12px;padding:24px;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;}
+  .modal{background:#fff;border-radius:12px;padding:24px;width:100%;max-width:640px;max-height:88vh;overflow-y:auto;margin:auto;}
   .modal h2{margin:0 0 16px;font-size:17px;color:var(--navy);}
   .field{margin-bottom:12px;}
   .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600;}
@@ -84,6 +87,8 @@
   .muted{color:var(--muted);font-size:12px;}
   a.tracklink{color:var(--navy);font-weight:600;text-decoration:none;}
   a.tracklink:hover{text-decoration:underline;}
+  .campos-envio{display:none;}
+  .campos-envio.show{display:block;}
 </style>
 </head>
 <body>
@@ -93,7 +98,7 @@
     <img class="logo" src="data:image/png;base64,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+Xxnz559/vnnvV4vIoaGhs6aNctms4WGhk6bNu348eO33nrrY4895vV616xZs2LFCk3TdF2fNm3ajTfeqCjKkSNHkpKSrFZraGjo1KlTjx8/rqqqYRj9+vV78skna2pqmjVrZrVat27d+v7777tcrvj4+MmTJ996661hYWGFhYUzZ8684YYbxo8fX1tbW1FR8dZbb82YMYNOLjhw4EBGRobb7W7evLlhGC6X65NPPqmtrX3ppZdUVf36668PHTo0Z86crKysiRMnOp1O2lrqcrm2bt3apk2bTp06kS87PDzc7/fPmzfviy++GD9+/MiRIxMSErZs2bJly5ZevXrNmzevR48eBQUFhw4daoCiUv/kI855u3bt9uzZQ2uH9qEwxu666y56snfv3nbt2imK0r9/f7vdjoiHDh2yWCy0tF944QU66mjGjBlbtmyhHLt27dpR4hZjrG/fvt9++y0ibty4MT8/HxGfe+65uLi43bt3l5WVnTx58vTp06Wlpfv373/hhRf2799PWXchISHbtm1DxO3bt0+ZMqW0tBQR8/Pzd+zYQZu9ysrKdu3a9eqrryIi+fOysrKoeYWFhRs2bEDEZcuWlZWVHTx4kBqwdu1aRHziiSc++OADKrZ8+fKqqipKTRk0aNBzzz1HWxHqn9zUgJQwcv0MGTKEPD7Lli2joVqxYgUlFg0ePBgu5rTl5+fn5+f7/X7KKqeHR44coQMkMjMzdV3v168fXDwRiQpMnDjRMAy6PnXq1PLly9977z062lTTNNre88orrxw6dIgxtn///i+//LJnz57FxcWrV6+mxkydOtVMX8/Ly1uxYoUQolevXgAwbNiwESNGUFrao48+ahhG8+bNAeAf//jH5MmTN2/e3K1bt+nTp1Pu79KlS3NzcxFx7NixVFtkZOTixYu3bt0aFxeXnp5us9kalBLWMKAZY6NGjULEJUuWuN3u+Pj4hIQEj8ezcOFCRBw5ciQxogEDBiBicnJyQUHBtm3bCE3O+alTp3bs2ME5HzhwICIOGzaMPPR0eKk56997771FixZVVVXdc889FRUVGzZsgIv5czQYiNitW7cOHTqUlJR4PJ69e/fGxcVpmsY5f/nll4UQjz322JgxY+Li4hISEpxOp91uf/bZZ1u1agUAoaGhjLFJkybRihkzZkzHjh0BICIignM+f/58Xdfj4uIY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" alt="MBE">
     <div>
       <h1>MBE Seguimientos</h1>
-      <div class="sub">Casilleros · Paquetes · Envíos</div>
+      <div class="sub">Envíos · Impresión · Servicios</div>
     </div>
   </div>
   <div class="status">
@@ -104,156 +109,149 @@
 
 <nav>
   <button class="tab-btn active" data-view="dashboard">Dashboard</button>
-  <button class="tab-btn" data-view="casilleros">Casilleros</button>
-  <button class="tab-btn" data-view="paquetes">Paquetes</button>
-  <button class="tab-btn" data-view="envios">Envíos</button>
+  <button class="tab-btn" data-view="movimientos">Movimientos</button>
+  <button class="tab-btn" data-view="clientes">Clientes</button>
 </nav>
 
 <main>
 
   <!-- DASHBOARD -->
   <section id="view-dashboard" class="view active">
+    <div class="toolbar">
+      <div class="filters">
+        <input type="month" id="dashMes" onchange="renderDashboard()">
+        <button class="secondary" onclick="document.getElementById('dashMes').value='';renderDashboard()">Ver todo</button>
+      </div>
+    </div>
     <div class="kpis">
-      <div class="kpi"><div class="num" id="kpiCasilleros">-</div><div class="label">Casilleros registrados</div></div>
-      <div class="kpi"><div class="num" id="kpiEnBodega">-</div><div class="label">Paquetes en bodega</div></div>
-      <div class="kpi"><div class="num" id="kpiPorNotificar">-</div><div class="label">Por notificar</div></div>
-      <div class="kpi"><div class="num" id="kpiEnTransito">-</div><div class="label">Envíos en tránsito</div></div>
-      <div class="kpi"><div class="num" id="kpiEntregados">-</div><div class="label">Entregados</div></div>
-      <div class="kpi"><div class="num" id="kpiPendientePago">-</div><div class="label">Pendiente de cobro (CLP)</div></div>
+      <div class="kpi"><div class="num" id="kpiVentas">-</div><div class="label">Ventas (PV Neto)</div></div>
+      <div class="kpi"><div class="num" id="kpiCosto">-</div><div class="label">Costo Neto</div></div>
+      <div class="kpi"><div class="num" id="kpiMargen">-</div><div class="label">Margen ($ y %)</div></div>
+      <div class="kpi"><div class="num" id="kpiPorCobrar">-</div><div class="label">Por cobrar</div></div>
+      <div class="kpi"><div class="num" id="kpiMovs">-</div><div class="label">Movimientos</div></div>
     </div>
-    <h2 style="font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Últimos paquetes recibidos</h2>
+    <h2 style="font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Ventas por cliente</h2>
+    <table style="margin-bottom:22px;">
+      <thead><tr><th>Cliente</th><th class="num-cell">Movimientos</th><th class="num-cell">PV Neto</th><th class="num-cell">Margen $</th></tr></thead>
+      <tbody id="dashboardClientesBody"><tr><td colspan="4" class="empty">Cargando...</td></tr></tbody>
+    </table>
+    <h2 style="font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Últimos movimientos</h2>
     <table>
-      <thead><tr><th>ID</th><th>Cliente</th><th>Descripción</th><th>Recepción</th><th>Estado</th></tr></thead>
-      <tbody id="dashboardPaquetesBody"><tr><td colspan="5" class="empty">Cargando...</td></tr></tbody>
+      <thead><tr><th>Fecha</th><th>Categoría</th><th>Cliente</th><th>Descripción</th><th class="num-cell">PV Neto</th><th>Pago</th></tr></thead>
+      <tbody id="dashboardMovsBody"><tr><td colspan="6" class="empty">Cargando...</td></tr></tbody>
     </table>
   </section>
 
-  <!-- CASILLEROS -->
-  <section id="view-casilleros" class="view">
+  <!-- MOVIMIENTOS -->
+  <section id="view-movimientos" class="view">
     <div class="toolbar">
       <div class="filters">
-        <input type="text" id="filtroCasillero" placeholder="Buscar por nombre o email..." oninput="renderCasilleros()">
-      </div>
-      <button class="primary" onclick="abrirModal('modalCasillero')">+ Nuevo casillero</button>
-    </div>
-    <table>
-      <thead><tr><th>ID</th><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Dirección de entrega</th><th>Ciudad</th><th>Registrado</th></tr></thead>
-      <tbody id="casillerosBody"><tr><td colspan="7" class="empty">Cargando...</td></tr></tbody>
-    </table>
-  </section>
-
-  <!-- PAQUETES -->
-  <section id="view-paquetes" class="view">
-    <div class="toolbar">
-      <div class="filters">
-        <select id="filtroPaqueteEstado" onchange="renderPaquetes()">
-          <option value="">Todos los estados</option>
+        <input type="month" id="filtroMes" onchange="renderMovimientos()">
+        <select id="filtroCategoria" onchange="renderMovimientos()">
+          <option value="">Todas las categorías</option>
         </select>
-        <input type="text" id="filtroPaqueteTexto" placeholder="Buscar cliente o descripción..." oninput="renderPaquetes()">
-      </div>
-      <button class="primary" onclick="abrirModalPaquete()">+ Registrar paquete recibido</button>
-    </div>
-    <table>
-      <thead><tr><th>ID</th><th>Cliente</th><th>Descripción</th><th>Origen</th><th>Tracking entrada</th><th>Recepción</th><th>Estado</th><th>Acciones</th></tr></thead>
-      <tbody id="paquetesBody"><tr><td colspan="8" class="empty">Cargando...</td></tr></tbody>
-    </table>
-  </section>
-
-  <!-- ENVIOS -->
-  <section id="view-envios" class="view">
-    <div class="toolbar">
-      <div class="filters">
-        <select id="filtroEnvioEstado" onchange="renderEnvios()">
-          <option value="">Todos los estados de envío</option>
-        </select>
-        <select id="filtroEnvioPago" onchange="renderEnvios()">
+        <select id="filtroPago" onchange="renderMovimientos()">
           <option value="">Todos los estados de pago</option>
         </select>
+        <input type="text" id="filtroTexto" placeholder="Buscar cliente, factura, guía..." oninput="renderMovimientos()">
       </div>
-      <button class="primary" onclick="abrirModalEnvio()">+ Nuevo envío</button>
+      <button class="primary" onclick="abrirModalMovimiento()">+ Nuevo movimiento</button>
     </div>
     <table>
-      <thead><tr><th>ID</th><th>Cliente</th><th>Destino</th><th>Courier</th><th>Guía</th><th>Costo</th><th>Pago</th><th>Estado envío</th><th>Acciones</th></tr></thead>
-      <tbody id="enviosBody"><tr><td colspan="9" class="empty">Cargando...</td></tr></tbody>
+      <thead><tr>
+        <th>Fecha</th><th>Categoría</th><th>Cliente</th><th>Destinatario</th><th>Comuna/Región</th>
+        <th>Courier / Guía</th><th class="num-cell">Costo</th><th class="num-cell">PV</th><th class="num-cell">Margen</th>
+        <th>Factura</th><th>Pago</th><th>Acciones</th>
+      </tr></thead>
+      <tbody id="movimientosBody"><tr><td colspan="12" class="empty">Cargando...</td></tr></tbody>
+    </table>
+  </section>
+
+  <!-- CLIENTES -->
+  <section id="view-clientes" class="view">
+    <div class="toolbar">
+      <div class="filters">
+        <input type="text" id="filtroCliente" placeholder="Buscar cliente..." oninput="renderClientes()">
+      </div>
+      <button class="primary" onclick="abrirModal('modalCliente')">+ Nuevo cliente</button>
+    </div>
+    <table>
+      <thead><tr><th>ID</th><th>Nombre</th><th>Contacto</th><th>Email</th><th>Teléfono</th><th class="num-cell">Movimientos</th><th class="num-cell">PV Neto acumulado</th></tr></thead>
+      <tbody id="clientesBody"><tr><td colspan="7" class="empty">Cargando...</td></tr></tbody>
     </table>
   </section>
 
 </main>
 
-<!-- MODAL: NUEVO CASILLERO -->
-<div class="modal-overlay" id="modalCasillero">
+<!-- MODAL: NUEVO CLIENTE -->
+<div class="modal-overlay" id="modalCliente">
   <div class="modal">
-    <h2>Nuevo casillero</h2>
-    <div class="field"><label>Nombre</label><input type="text" id="cNombre"></div>
+    <h2>Nuevo cliente</h2>
+    <div class="field"><label>Nombre</label><input type="text" id="clNombre"></div>
     <div class="field-row">
-      <div class="field"><label>Email</label><input type="text" id="cEmail"></div>
-      <div class="field"><label>Teléfono</label><input type="text" id="cTelefono"></div>
+      <div class="field"><label>Contacto</label><input type="text" id="clContacto"></div>
+      <div class="field"><label>Teléfono</label><input type="text" id="clTelefono"></div>
     </div>
-    <div class="field"><label>Dirección de entrega</label><input type="text" id="cDireccion"></div>
-    <div class="field"><label>Ciudad</label><input type="text" id="cCiudad" placeholder="Quilicura, Santiago, etc."></div>
-    <div class="field"><label>Notas</label><textarea id="cNotas" rows="2"></textarea></div>
+    <div class="field"><label>Email</label><input type="text" id="clEmail"></div>
+    <div class="field"><label>Notas</label><textarea id="clNotas" rows="2"></textarea></div>
     <div class="modal-actions">
-      <button class="secondary" onclick="cerrarModal('modalCasillero')">Cancelar</button>
-      <button class="primary" onclick="guardarCasillero()">Guardar</button>
+      <button class="secondary" onclick="cerrarModal('modalCliente')">Cancelar</button>
+      <button class="primary" onclick="guardarCliente()">Guardar</button>
     </div>
   </div>
 </div>
 
-<!-- MODAL: NUEVO PAQUETE -->
-<div class="modal-overlay" id="modalPaquete">
+<!-- MODAL: NUEVO/EDITAR MOVIMIENTO -->
+<div class="modal-overlay" id="modalMovimiento">
   <div class="modal">
-    <h2>Registrar paquete recibido en bodega</h2>
-    <div class="field">
-      <label>Casillero (opcional)</label>
-      <select id="pCasillero"><option value="">-- Cliente ocasional / sin casillero --</option></select>
-    </div>
-    <div class="field"><label>Nombre del cliente</label><input type="text" id="pCliente"></div>
-    <div class="field"><label>Descripción del contenido</label><input type="text" id="pDescripcion"></div>
+    <h2 id="movModalTitulo">Nuevo movimiento</h2>
+    <input type="hidden" id="movId">
     <div class="field-row">
-      <div class="field"><label>Tienda / origen</label><input type="text" id="pTienda" placeholder="Amazon, eBay, etc."></div>
-      <div class="field"><label>Courier de entrada</label>
-        <select id="pCourierEntrada"></select>
+      <div class="field"><label>Fecha</label><input type="date" id="movFecha"></div>
+      <div class="field"><label>Categoría</label><select id="movCategoria" onchange="actualizarCamposPorCategoria()"></select></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Tipo</label><select id="movTipo"></select></div>
+      <div class="field"><label>Cliente</label>
+        <input type="text" id="movCliente" list="listaClientes" placeholder="Escribe o elige un cliente">
+        <datalist id="listaClientes"></datalist>
       </div>
     </div>
-    <div class="field-row">
-      <div class="field"><label>Tracking de entrada</label><input type="text" id="pTrackingEntrada"></div>
-      <div class="field"><label>Peso (kg)</label><input type="number" step="0.01" id="pPeso"></div>
-    </div>
-    <div class="field"><label>Valor declarado (USD)</label><input type="number" step="0.01" id="pValor"></div>
-    <div class="field"><label>Notas</label><textarea id="pNotas" rows="2"></textarea></div>
-    <div class="modal-actions">
-      <button class="secondary" onclick="cerrarModal('modalPaquete')">Cancelar</button>
-      <button class="primary" onclick="guardarPaquete()">Guardar</button>
-    </div>
-  </div>
-</div>
 
-<!-- MODAL: NUEVO ENVIO -->
-<div class="modal-overlay" id="modalEnvio">
-  <div class="modal">
-    <h2>Nuevo envío</h2>
-    <div class="field">
-      <label>Paquete en bodega (opcional)</label>
-      <select id="ePaquete" onchange="autocompletarDesdeEnvio()"><option value="">-- Envío directo, sin paquete previo --</option></select>
+    <div class="campos-envio" id="camposEnvio">
+      <div class="field"><label>Sub-Cliente / Destinatario final</label><input type="text" id="movSubCliente"></div>
+      <div class="field-row">
+        <div class="field"><label>Dirección</label><input type="text" id="movDireccion"></div>
+        <div class="field"><label>Depto / N° oficina</label><input type="text" id="movDepto"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Comuna</label><input type="text" id="movComuna"></div>
+        <div class="field"><label>Región / País</label><input type="text" id="movRegion"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Courier</label><select id="movCourier"></select></div>
+        <div class="field"><label>N° de guía</label><input type="text" id="movGuia"></div>
+      </div>
     </div>
-    <div class="field"><label>Nombre del cliente</label><input type="text" id="eCliente"></div>
+
+    <div class="field"><label>Descripción</label><input type="text" id="movDescripcion" placeholder="Detalle del envío, impresión o servicio"></div>
+
     <div class="field-row">
-      <div class="field"><label>Destino (ciudad/país)</label><input type="text" id="eDestino"></div>
-      <div class="field"><label>Dirección de destino</label><input type="text" id="eDireccion"></div>
+      <div class="field"><label>Costo Neto (CLP)</label><input type="number" id="movCosto" oninput="previsualizarMargen()"></div>
+      <div class="field"><label>PV Neto (CLP)</label><input type="number" id="movPv" oninput="previsualizarMargen()"></div>
+      <div class="field"><label>Margen</label><input type="text" id="movMargenPreview" disabled></div>
     </div>
+
     <div class="field-row">
-      <div class="field"><label>Courier</label><select id="eCourier"></select></div>
-      <div class="field"><label>Número de guía</label><input type="text" id="eGuia"></div>
+      <div class="field"><label>N° Factura MBE</label><input type="text" id="movFactura"></div>
+      <div class="field"><label>Estado de pago</label><select id="movEstadoPago"></select></div>
     </div>
-    <div class="field-row">
-      <div class="field"><label>Costo de envío (CLP)</label><input type="number" id="eCosto"></div>
-      <div class="field"><label>Cobrado al cliente (CLP)</label><input type="number" id="eCobrado"></div>
-    </div>
-    <div class="field"><label>Fecha de entrega estimada</label><input type="date" id="eFechaEst"></div>
-    <div class="field"><label>Notas</label><textarea id="eNotas" rows="2"></textarea></div>
+
+    <div class="field"><label>Observaciones</label><textarea id="movObservaciones" rows="2"></textarea></div>
+
     <div class="modal-actions">
-      <button class="secondary" onclick="cerrarModal('modalEnvio')">Cancelar</button>
-      <button class="primary" onclick="guardarEnvio()">Guardar</button>
+      <button class="secondary" onclick="cerrarModal('modalMovimiento')">Cancelar</button>
+      <button class="primary" onclick="guardarMovimiento()">Guardar</button>
     </div>
   </div>
 </div>
@@ -265,7 +263,8 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwmzEkAjD-vqdTeUPCv4TNGN95rq0hMnGTr2u9sGU1KqHQadm7b8gssDziqUschZUk/exec";
 const AUTO_REFRESH_MS = 120000; // 2 minutos
 
-let DATA = { casilleros: [], paquetes: [], envios: [], config: { couriers: [], estadosPaquete: [], estadosEnvio: [], estadosPago: [] } };
+let DATA = { movimientos: [], clientes: [], config: { couriers: [], categorias: {}, estadosPago: [] } };
+let modoEdicion = false;
 
 // ==== NAVEGACION ====
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -297,9 +296,8 @@ function cargarDatos(manual){
       DATA = json;
       poblarSelectsConfig();
       renderDashboard();
-      renderCasilleros();
-      renderPaquetes();
-      renderEnvios();
+      renderMovimientos();
+      renderClientes();
       const now = new Date();
       document.getElementById('lastSync').textContent = 'Actualizado ' + now.toLocaleTimeString('es-CL');
       if (manual) toast('Datos actualizados');
@@ -312,245 +310,256 @@ function cargarDatos(manual){
 
 function poblarSelectsConfig(){
   const couriers = DATA.config.couriers || [];
-  const courierOptions = couriers.map(c => `<option value="${c.Courier}">${c.Courier}</option>`).join('');
-  document.getElementById('pCourierEntrada').innerHTML = courierOptions;
-  document.getElementById('eCourier').innerHTML = courierOptions;
+  document.getElementById('movCourier').innerHTML = couriers.map(c => `<option value="${c.Courier}">${c.Courier}</option>`).join('');
 
-  const estPaq = DATA.config.estadosPaquete || [];
-  document.getElementById('filtroPaqueteEstado').innerHTML = '<option value="">Todos los estados</option>' +
-    estPaq.map(e => `<option value="${e}">${e}</option>`).join('');
+  const categorias = Object.keys(DATA.config.categorias || {});
+  document.getElementById('movCategoria').innerHTML = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
+  document.getElementById('filtroCategoria').innerHTML = '<option value="">Todas las categorías</option>' +
+    categorias.map(c => `<option value="${c}">${c}</option>`).join('');
 
-  const estEnv = DATA.config.estadosEnvio || [];
-  document.getElementById('filtroEnvioEstado').innerHTML = '<option value="">Todos los estados de envío</option>' +
-    estEnv.map(e => `<option value="${e}">${e}</option>`).join('');
+  const estadosPago = DATA.config.estadosPago || [];
+  document.getElementById('movEstadoPago').innerHTML = estadosPago.map(e => `<option value="${e}">${e}</option>`).join('');
+  document.getElementById('filtroPago').innerHTML = '<option value="">Todos los estados de pago</option>' +
+    estadosPago.map(e => `<option value="${e}">${e}</option>`).join('');
 
-  const estPago = DATA.config.estadosPago || [];
-  document.getElementById('filtroEnvioPago').innerHTML = '<option value="">Todos los estados de pago</option>' +
-    estPago.map(e => `<option value="${e}">${e}</option>`).join('');
+  document.getElementById('listaClientes').innerHTML = DATA.clientes.map(c => `<option value="${c.Nombre}">`).join('');
 
-  const casOptions = '<option value="">-- Cliente ocasional / sin casillero --</option>' +
-    DATA.casilleros.map(c => `<option value="${c.ID}">${c.ID} - ${c.Nombre}</option>`).join('');
-  document.getElementById('pCasillero').innerHTML = casOptions;
-
-  const paqPendientes = DATA.paquetes.filter(p => p.Estado !== 'Despachado');
-  document.getElementById('ePaquete').innerHTML = '<option value="">-- Envío directo, sin paquete previo --</option>' +
-    paqPendientes.map(p => `<option value="${p.ID}">${p.ID} - ${p.Cliente_Nombre} (${p.Descripcion || ''})</option>`).join('');
+  actualizarCamposPorCategoria();
 }
 
-function autocompletarDesdeEnvio(){
-  const id = document.getElementById('ePaquete').value;
-  if (!id) return;
-  const p = DATA.paquetes.find(x => x.ID === id);
-  if (!p) return;
-  document.getElementById('eCliente').value = p.Cliente_Nombre || '';
-  if (p.Casillero_ID) {
-    const cas = DATA.casilleros.find(c => c.ID === p.Casillero_ID);
-    if (cas) {
-      document.getElementById('eDestino').value = cas.Ciudad || '';
-      document.getElementById('eDireccion').value = cas.Direccion_Entrega || '';
-    }
-  }
+function actualizarCamposPorCategoria(){
+  const categoria = document.getElementById('movCategoria').value;
+  const tipos = (DATA.config.categorias || {})[categoria] || [];
+  document.getElementById('movTipo').innerHTML = tipos.map(t => `<option value="${t}">${t}</option>`).join('');
+  const camposEnvio = document.getElementById('camposEnvio');
+  if (categoria === 'Envio') camposEnvio.classList.add('show');
+  else camposEnvio.classList.remove('show');
+}
+
+function previsualizarMargen(){
+  const costo = Number(document.getElementById('movCosto').value) || 0;
+  const pv = Number(document.getElementById('movPv').value) || 0;
+  const margen = pv > 0 ? ((pv - costo) / pv) * 100 : 0;
+  document.getElementById('movMargenPreview').value = formatCLP(pv - costo) + ' (' + margen.toFixed(1) + '%)';
+}
+
+// ==== HELPERS DE FECHA/MES ====
+function mesDeFecha(fecha){
+  if (!fecha) return '';
+  return String(fecha).slice(0, 7); // yyyy-MM
 }
 
 // ==== DASHBOARD ====
 function renderDashboard(){
-  document.getElementById('kpiCasilleros').textContent = DATA.casilleros.length;
-  document.getElementById('kpiEnBodega').textContent = DATA.paquetes.filter(p => p.Estado === 'Recibido en Bodega' || p.Estado === 'Notificado al Cliente' || p.Estado === 'Listo para Despacho').length;
-  document.getElementById('kpiPorNotificar').textContent = DATA.paquetes.filter(p => p.Notificado !== 'Si').length;
-  document.getElementById('kpiEnTransito').textContent = DATA.envios.filter(e => e.Estado_Envio === 'En Transito' || e.Estado_Envio === 'En Aduana').length;
-  document.getElementById('kpiEntregados').textContent = DATA.envios.filter(e => e.Estado_Envio === 'Entregado').length;
+  const mesFiltro = document.getElementById('dashMes').value;
+  const movs = DATA.movimientos.filter(m => !mesFiltro || mesDeFecha(m.Fecha) === mesFiltro);
 
-  const pendiente = DATA.envios
-    .filter(e => e.Estado_Pago !== 'Pagado')
-    .reduce((sum, e) => sum + ((Number(e.Cobrado_Cliente_CLP) || 0) - 0), 0);
-  document.getElementById('kpiPendientePago').textContent = formatCLP(pendiente);
+  const ventas = movs.reduce((s, m) => s + (Number(m.PV_Neto) || 0), 0);
+  const costo = movs.reduce((s, m) => s + (Number(m.Costo_Neto) || 0), 0);
+  const margenPct = ventas > 0 ? ((ventas - costo) / ventas) * 100 : 0;
+  const porCobrar = movs.filter(m => m.Estado_Pago !== 'Pagada').reduce((s, m) => s + (Number(m.PV_Neto) || 0), 0);
 
-  const ultimos = [...DATA.paquetes].sort((a,b) => (b.Fecha_Recepcion || '').localeCompare(a.Fecha_Recepcion || '')).slice(0, 8);
-  const body = document.getElementById('dashboardPaquetesBody');
-  if (ultimos.length === 0) { body.innerHTML = '<tr><td colspan="5" class="empty">Sin paquetes registrados aún</td></tr>'; return; }
-  body.innerHTML = ultimos.map(p => `
-    <tr>
-      <td>${p.ID}</td>
-      <td>${escapeHtml(p.Cliente_Nombre)}</td>
-      <td>${escapeHtml(p.Descripcion)}</td>
-      <td>${p.Fecha_Recepcion || ''}</td>
-      <td>${badgePaquete(p.Estado)}</td>
-    </tr>`).join('');
-}
+  document.getElementById('kpiVentas').textContent = formatCLP(ventas);
+  document.getElementById('kpiCosto').textContent = formatCLP(costo);
+  document.getElementById('kpiMargen').textContent = formatCLP(ventas - costo) + ' (' + margenPct.toFixed(1) + '%)';
+  document.getElementById('kpiPorCobrar').textContent = formatCLP(porCobrar);
+  document.getElementById('kpiMovs').textContent = movs.length;
 
-// ==== CASILLEROS ====
-function renderCasilleros(){
-  const filtro = (document.getElementById('filtroCasillero').value || '').toLowerCase();
-  const list = DATA.casilleros.filter(c =>
-    !filtro || (c.Nombre || '').toLowerCase().includes(filtro) || (c.Email || '').toLowerCase().includes(filtro)
-  );
-  const body = document.getElementById('casillerosBody');
-  if (list.length === 0) { body.innerHTML = '<tr><td colspan="7" class="empty">No hay casilleros que coincidan</td></tr>'; return; }
-  body.innerHTML = list.map(c => `
-    <tr>
-      <td>${c.ID}</td>
-      <td>${escapeHtml(c.Nombre)}</td>
-      <td>${escapeHtml(c.Email)}</td>
-      <td>${escapeHtml(c.Telefono)}</td>
-      <td>${escapeHtml(c.Direccion_Entrega)}</td>
-      <td>${escapeHtml(c.Ciudad)}</td>
-      <td>${c.Fecha_Registro || ''}</td>
-    </tr>`).join('');
-}
-
-function guardarCasillero(){
-  const body = {
-    action: 'addCasillero',
-    nombre: document.getElementById('cNombre').value,
-    email: document.getElementById('cEmail').value,
-    telefono: document.getElementById('cTelefono').value,
-    direccion: document.getElementById('cDireccion').value,
-    ciudad: document.getElementById('cCiudad').value,
-    notas: document.getElementById('cNotas').value
-  };
-  if (!body.nombre) { toast('El nombre es obligatorio', true); return; }
-  enviarAccion(body, () => {
-    cerrarModal('modalCasillero');
-    ['cNombre','cEmail','cTelefono','cDireccion','cCiudad','cNotas'].forEach(id => document.getElementById(id).value = '');
-    toast('Casillero creado');
+  // Ventas por cliente
+  const porCliente = {};
+  movs.forEach(m => {
+    const key = m.Cliente || '(sin cliente)';
+    if (!porCliente[key]) porCliente[key] = { count: 0, pv: 0, margen: 0 };
+    porCliente[key].count++;
+    porCliente[key].pv += Number(m.PV_Neto) || 0;
+    porCliente[key].margen += (Number(m.PV_Neto) || 0) - (Number(m.Costo_Neto) || 0);
   });
+  const clientesOrdenados = Object.entries(porCliente).sort((a, b) => b[1].pv - a[1].pv).slice(0, 10);
+  const bodyCli = document.getElementById('dashboardClientesBody');
+  bodyCli.innerHTML = clientesOrdenados.length ? clientesOrdenados.map(([nombre, d]) => `
+    <tr>
+      <td>${escapeHtml(nombre)}</td>
+      <td class="num-cell">${d.count}</td>
+      <td class="num-cell">${formatCLP(d.pv)}</td>
+      <td class="num-cell">${formatCLP(d.margen)}</td>
+    </tr>`).join('') : '<tr><td colspan="4" class="empty">Sin movimientos en este período</td></tr>';
+
+  // Ultimos movimientos
+  const ultimos = [...movs].sort((a,b) => (b.Fecha || '').localeCompare(a.Fecha || '')).slice(0, 10);
+  const bodyMovs = document.getElementById('dashboardMovsBody');
+  bodyMovs.innerHTML = ultimos.length ? ultimos.map(m => `
+    <tr>
+      <td>${m.Fecha || ''}</td>
+      <td>${badgeCategoria(m.Categoria)}</td>
+      <td>${escapeHtml(m.Cliente)}</td>
+      <td>${escapeHtml(m.Descripcion)}</td>
+      <td class="num-cell">${formatCLP(m.PV_Neto)}</td>
+      <td>${badgePago(m.Estado_Pago)}</td>
+    </tr>`).join('') : '<tr><td colspan="6" class="empty">Sin movimientos registrados aún</td></tr>';
 }
 
-// ==== PAQUETES ====
-function abrirModalPaquete(){ abrirModal('modalPaquete'); }
+// ==== MOVIMIENTOS ====
+function abrirModalMovimiento(){
+  modoEdicion = false;
+  document.getElementById('movModalTitulo').textContent = 'Nuevo movimiento';
+  document.getElementById('movId').value = '';
+  ['movSubCliente','movDireccion','movDepto','movComuna','movRegion','movGuia','movDescripcion','movCosto','movPv','movFactura','movObservaciones','movCliente'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('movFecha').value = new Date().toISOString().slice(0,10);
+  document.getElementById('movMargenPreview').value = '';
+  actualizarCamposPorCategoria();
+  abrirModal('modalMovimiento');
+}
 
-function renderPaquetes(){
-  const estadoF = document.getElementById('filtroPaqueteEstado').value;
-  const texto = (document.getElementById('filtroPaqueteTexto').value || '').toLowerCase();
-  const list = DATA.paquetes.filter(p =>
-    (!estadoF || p.Estado === estadoF) &&
-    (!texto || (p.Cliente_Nombre||'').toLowerCase().includes(texto) || (p.Descripcion||'').toLowerCase().includes(texto))
-  );
-  const body = document.getElementById('paquetesBody');
-  if (list.length === 0) { body.innerHTML = '<tr><td colspan="8" class="empty">No hay paquetes que coincidan</td></tr>'; return; }
-  body.innerHTML = list.map(p => `
+function editarMovimiento(id){
+  const m = DATA.movimientos.find(x => x.ID === id);
+  if (!m) return;
+  modoEdicion = true;
+  document.getElementById('movModalTitulo').textContent = 'Editar movimiento ' + id;
+  document.getElementById('movId').value = id;
+  document.getElementById('movFecha').value = m.Fecha || '';
+  document.getElementById('movCategoria').value = m.Categoria || '';
+  actualizarCamposPorCategoria();
+  document.getElementById('movTipo').value = m.Tipo || '';
+  document.getElementById('movCliente').value = m.Cliente || '';
+  document.getElementById('movSubCliente').value = m.Sub_Cliente || '';
+  document.getElementById('movDireccion').value = m.Direccion || '';
+  document.getElementById('movDepto').value = m.Depto_Oficina || '';
+  document.getElementById('movComuna').value = m.Comuna || '';
+  document.getElementById('movRegion').value = m.Region_Pais || '';
+  document.getElementById('movCourier').value = m.Courier || '';
+  document.getElementById('movGuia').value = m.Numero_Guia || '';
+  document.getElementById('movDescripcion').value = m.Descripcion || '';
+  document.getElementById('movCosto').value = m.Costo_Neto || '';
+  document.getElementById('movPv').value = m.PV_Neto || '';
+  document.getElementById('movFactura').value = m.Factura_MBE || '';
+  document.getElementById('movEstadoPago').value = m.Estado_Pago || '';
+  document.getElementById('movObservaciones').value = m.Observaciones || '';
+  previsualizarMargen();
+  abrirModal('modalMovimiento');
+}
+
+function renderMovimientos(){
+  const mesFiltro = document.getElementById('filtroMes').value;
+  const catFiltro = document.getElementById('filtroCategoria').value;
+  const pagoFiltro = document.getElementById('filtroPago').value;
+  const texto = (document.getElementById('filtroTexto').value || '').toLowerCase();
+
+  const list = DATA.movimientos.filter(m =>
+    (!mesFiltro || mesDeFecha(m.Fecha) === mesFiltro) &&
+    (!catFiltro || m.Categoria === catFiltro) &&
+    (!pagoFiltro || m.Estado_Pago === pagoFiltro) &&
+    (!texto || (m.Cliente||'').toLowerCase().includes(texto) || (m.Factura_MBE||'').toString().toLowerCase().includes(texto) || (m.Numero_Guia||'').toString().toLowerCase().includes(texto))
+  ).sort((a,b) => (b.Fecha || '').localeCompare(a.Fecha || ''));
+
+  const body = document.getElementById('movimientosBody');
+  if (list.length === 0) { body.innerHTML = '<tr><td colspan="12" class="empty">No hay movimientos que coincidan</td></tr>'; return; }
+
+  body.innerHTML = list.map(m => `
     <tr>
-      <td>${p.ID}</td>
-      <td>${escapeHtml(p.Cliente_Nombre)}</td>
-      <td>${escapeHtml(p.Descripcion)}</td>
-      <td>${escapeHtml(p.Tienda_Origen)}</td>
-      <td>${trackingLink(p.Courier_Entrada, p.Tracking_Entrada)}</td>
-      <td>${p.Fecha_Recepcion || ''}</td>
-      <td>${badgePaquete(p.Estado)}</td>
+      <td>${m.Fecha || ''}</td>
+      <td>${badgeCategoria(m.Categoria)}<div class="muted">${escapeHtml(m.Tipo)}</div></td>
+      <td>${escapeHtml(m.Cliente)}</td>
+      <td>${escapeHtml(m.Sub_Cliente)}</td>
+      <td>${escapeHtml(m.Comuna)}${m.Region_Pais ? ', ' + escapeHtml(m.Region_Pais) : ''}</td>
+      <td>${escapeHtml(m.Courier)}<br>${trackingLink(m.Courier, m.Numero_Guia)}</td>
+      <td class="num-cell">${formatCLP(m.Costo_Neto)}</td>
+      <td class="num-cell">${formatCLP(m.PV_Neto)}</td>
+      <td class="num-cell">${(Number(m.Margen_Pct)||0).toFixed(1)}%</td>
+      <td>${escapeHtml(m.Factura_MBE)}</td>
+      <td>${badgePago(m.Estado_Pago)}</td>
       <td class="row-actions">
-        ${p.Notificado !== 'Si' ? `<button class="secondary" onclick="marcarNotificado('${p.ID}')">Notificar</button>` : ''}
-        ${p.Estado !== 'Despachado' ? `<button class="secondary" onclick="avanzarEstadoPaquete('${p.ID}','${p.Estado}')">Avanzar estado</button>` : ''}
-        ${p.Estado !== 'Despachado' ? `<button class="secondary" onclick="crearEnvioDesdePaquete('${p.ID}')">Crear envío</button>` : ''}
+        <button class="secondary" onclick="editarMovimiento('${m.ID}')">Editar</button>
+        ${m.Estado_Pago !== 'Pagada' ? `<button class="secondary" onclick="marcarPagado('${m.ID}')">Marcar pagado</button>` : ''}
+        <button class="danger" onclick="eliminarMovimiento('${m.ID}')">Eliminar</button>
       </td>
     </tr>`).join('');
 }
 
-function guardarPaquete(){
+function guardarMovimiento(){
+  const id = document.getElementById('movId').value;
   const body = {
-    action: 'addPaquete',
-    casilleroId: document.getElementById('pCasillero').value,
-    clienteNombre: document.getElementById('pCliente').value,
-    descripcion: document.getElementById('pDescripcion').value,
-    tiendaOrigen: document.getElementById('pTienda').value,
-    courierEntrada: document.getElementById('pCourierEntrada').value,
-    trackingEntrada: document.getElementById('pTrackingEntrada').value,
-    pesoKg: document.getElementById('pPeso').value,
-    valorDeclarado: document.getElementById('pValor').value,
-    notas: document.getElementById('pNotas').value
+    action: modoEdicion ? 'updateMovimiento' : 'addMovimiento',
+    fecha: document.getElementById('movFecha').value,
+    categoria: document.getElementById('movCategoria').value,
+    tipo: document.getElementById('movTipo').value,
+    cliente: document.getElementById('movCliente').value,
+    subCliente: document.getElementById('movSubCliente').value,
+    direccion: document.getElementById('movDireccion').value,
+    deptoOficina: document.getElementById('movDepto').value,
+    comuna: document.getElementById('movComuna').value,
+    regionPais: document.getElementById('movRegion').value,
+    courier: document.getElementById('movCourier').value,
+    numeroGuia: document.getElementById('movGuia').value,
+    descripcion: document.getElementById('movDescripcion').value,
+    costoNeto: document.getElementById('movCosto').value,
+    pvNeto: document.getElementById('movPv').value,
+    facturaMbe: document.getElementById('movFactura').value,
+    estadoPago: document.getElementById('movEstadoPago').value,
+    observaciones: document.getElementById('movObservaciones').value
   };
-  if (!body.clienteNombre) { toast('El nombre del cliente es obligatorio', true); return; }
+  if (modoEdicion) body.id = id;
+
+  if (!body.cliente || !body.categoria) { toast('Cliente y categoría son obligatorios', true); return; }
+
   enviarAccion(body, () => {
-    cerrarModal('modalPaquete');
-    ['pCliente','pDescripcion','pTienda','pTrackingEntrada','pPeso','pValor','pNotas'].forEach(id => document.getElementById(id).value = '');
-    toast('Paquete registrado en bodega');
+    cerrarModal('modalMovimiento');
+    toast(modoEdicion ? 'Movimiento actualizado' : 'Movimiento registrado');
   });
-}
-
-function marcarNotificado(id){
-  enviarAccion({ action: 'marcarNotificado', id }, () => toast('Cliente marcado como notificado'));
-}
-
-function avanzarEstadoPaquete(id, estadoActual){
-  const secuencia = DATA.config.estadosPaquete;
-  const idx = secuencia.indexOf(estadoActual);
-  const siguiente = secuencia[idx + 1] || estadoActual;
-  enviarAccion({ action: 'updatePaqueteEstado', id, estado: siguiente }, () => toast('Estado actualizado a "' + siguiente + '"'));
-}
-
-function crearEnvioDesdePaquete(id){
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelector('[data-view="envios"]').classList.add('active');
-  document.getElementById('view-envios').classList.add('active');
-  abrirModal('modalEnvio');
-  setTimeout(() => {
-    document.getElementById('ePaquete').value = id;
-    autocompletarDesdeEnvio();
-  }, 50);
-}
-
-// ==== ENVIOS ====
-function abrirModalEnvio(){ abrirModal('modalEnvio'); }
-
-function renderEnvios(){
-  const estadoF = document.getElementById('filtroEnvioEstado').value;
-  const pagoF = document.getElementById('filtroEnvioPago').value;
-  const list = DATA.envios.filter(e =>
-    (!estadoF || e.Estado_Envio === estadoF) && (!pagoF || e.Estado_Pago === pagoF)
-  );
-  const body = document.getElementById('enviosBody');
-  if (list.length === 0) { body.innerHTML = '<tr><td colspan="9" class="empty">No hay envíos que coincidan</td></tr>'; return; }
-  body.innerHTML = list.map(e => `
-    <tr>
-      <td>${e.ID}</td>
-      <td>${escapeHtml(e.Cliente_Nombre)}</td>
-      <td>${escapeHtml(e.Destino)}</td>
-      <td>${escapeHtml(e.Courier)}</td>
-      <td>${trackingLink(e.Courier, e.Numero_Guia)}</td>
-      <td>${formatCLP(e.Costo_Envio_CLP)}</td>
-      <td>${badgePago(e.Estado_Pago)}</td>
-      <td>${badgeEnvio(e.Estado_Envio)}</td>
-      <td class="row-actions">
-        ${e.Estado_Envio !== 'Entregado' ? `<button class="secondary" onclick="avanzarEstadoEnvio('${e.ID}','${e.Estado_Envio}')">Avanzar estado</button>` : ''}
-        ${e.Estado_Pago !== 'Pagado' ? `<button class="secondary" onclick="marcarPagado('${e.ID}')">Marcar pagado</button>` : ''}
-      </td>
-    </tr>`).join('');
-}
-
-function guardarEnvio(){
-  const body = {
-    action: 'addEnvio',
-    paqueteId: document.getElementById('ePaquete').value,
-    clienteNombre: document.getElementById('eCliente').value,
-    destino: document.getElementById('eDestino').value,
-    direccionDestino: document.getElementById('eDireccion').value,
-    courier: document.getElementById('eCourier').value,
-    numeroGuia: document.getElementById('eGuia').value,
-    costoEnvio: document.getElementById('eCosto').value,
-    cobradoCliente: document.getElementById('eCobrado').value,
-    fechaEntregaEstimada: document.getElementById('eFechaEst').value,
-    notas: document.getElementById('eNotas').value
-  };
-  const paq = DATA.paquetes.find(p => p.ID === body.paqueteId);
-  body.casilleroId = paq ? paq.Casillero_ID : '';
-  if (!body.clienteNombre || !body.courier) { toast('Cliente y courier son obligatorios', true); return; }
-  enviarAccion(body, () => {
-    cerrarModal('modalEnvio');
-    ['eCliente','eDestino','eDireccion','eGuia','eCosto','eCobrado','eFechaEst','eNotas'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('ePaquete').value = '';
-    toast('Envío creado');
-  });
-}
-
-function avanzarEstadoEnvio(id, estadoActual){
-  const secuencia = DATA.config.estadosEnvio;
-  const idx = secuencia.indexOf(estadoActual);
-  const siguiente = secuencia[idx + 1] || estadoActual;
-  enviarAccion({ action: 'updateEnvioEstado', id, estado: siguiente }, () => toast('Estado actualizado a "' + siguiente + '"'));
 }
 
 function marcarPagado(id){
-  enviarAccion({ action: 'marcarPago', id, estadoPago: 'Pagado' }, () => toast('Marcado como pagado'));
+  enviarAccion({ action: 'updateMovimiento', id, estadoPago: 'Pagada' }, () => toast('Marcado como pagado'));
+}
+
+function eliminarMovimiento(id){
+  if (!confirm('¿Eliminar el movimiento ' + id + '? Esta acción no se puede deshacer.')) return;
+  enviarAccion({ action: 'deleteMovimiento', id }, () => toast('Movimiento eliminado'));
+}
+
+// ==== CLIENTES ====
+function renderClientes(){
+  const filtro = (document.getElementById('filtroCliente').value || '').toLowerCase();
+  const stats = {};
+  DATA.movimientos.forEach(m => {
+    const key = m.Cliente || '';
+    if (!stats[key]) stats[key] = { count: 0, pv: 0 };
+    stats[key].count++;
+    stats[key].pv += Number(m.PV_Neto) || 0;
+  });
+
+  const list = DATA.clientes.filter(c => !filtro || (c.Nombre || '').toLowerCase().includes(filtro));
+  const body = document.getElementById('clientesBody');
+  if (list.length === 0) { body.innerHTML = '<tr><td colspan="7" class="empty">No hay clientes que coincidan</td></tr>'; return; }
+  body.innerHTML = list.map(c => {
+    const s = stats[c.Nombre] || { count: 0, pv: 0 };
+    return `
+    <tr>
+      <td>${c.ID}</td>
+      <td>${escapeHtml(c.Nombre)}</td>
+      <td>${escapeHtml(c.Contacto)}</td>
+      <td>${escapeHtml(c.Email)}</td>
+      <td>${escapeHtml(c.Telefono)}</td>
+      <td class="num-cell">${s.count}</td>
+      <td class="num-cell">${formatCLP(s.pv)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function guardarCliente(){
+  const body = {
+    action: 'addCliente',
+    nombre: document.getElementById('clNombre').value,
+    contacto: document.getElementById('clContacto').value,
+    email: document.getElementById('clEmail').value,
+    telefono: document.getElementById('clTelefono').value,
+    notas: document.getElementById('clNotas').value
+  };
+  if (!body.nombre) { toast('El nombre es obligatorio', true); return; }
+  enviarAccion(body, () => {
+    cerrarModal('modalCliente');
+    ['clNombre','clContacto','clEmail','clTelefono','clNotas'].forEach(id => document.getElementById(id).value = '');
+    toast('Cliente creado');
+  });
 }
 
 // ==== HELPERS ====
@@ -566,9 +575,8 @@ function enviarAccion(body, onSuccess){
     DATA = json.all;
     poblarSelectsConfig();
     renderDashboard();
-    renderCasilleros();
-    renderPaquetes();
-    renderEnvios();
+    renderMovimientos();
+    renderClientes();
     if (onSuccess) onSuccess();
   })
   .catch(err => toast('Error de conexión: ' + err, true));
@@ -584,21 +592,17 @@ function trackingLink(courier, tracking){
   return escapeHtml(tracking);
 }
 
-function badgePaquete(estado){
-  const map = { 'Recibido en Bodega':'gray', 'Notificado al Cliente':'blue', 'Listo para Despacho':'amber', 'Despachado':'green' };
-  return `<span class="badge ${map[estado] || 'gray'}">${estado || ''}</span>`;
-}
-function badgeEnvio(estado){
-  const map = { 'Preparando':'gray', 'Despachado':'blue', 'En Transito':'blue', 'En Aduana':'amber', 'Entregado':'green' };
-  return `<span class="badge ${map[estado] || 'gray'}">${estado || ''}</span>`;
+function badgeCategoria(cat){
+  const map = { 'Envio':'blue', 'Impresion':'amber', 'Servicio':'green' };
+  return `<span class="badge ${map[cat] || 'gray'}">${cat || ''}</span>`;
 }
 function badgePago(estado){
-  const map = { 'Pendiente':'red', 'Parcial':'amber', 'Pagado':'green' };
+  const map = { 'Por Cobrar':'red', 'Parcial':'amber', 'Pagada':'green' };
   return `<span class="badge ${map[estado] || 'gray'}">${estado || ''}</span>`;
 }
 function formatCLP(n){
   const num = Number(n) || 0;
-  return '$' + num.toLocaleString('es-CL');
+  return '$' + num.toLocaleString('es-CL', { maximumFractionDigits: 0 });
 }
 function escapeHtml(str){
   if (str === undefined || str === null) return '';
