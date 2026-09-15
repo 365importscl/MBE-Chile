@@ -160,10 +160,10 @@
     <table>
       <thead><tr>
         <th>Fecha</th><th>Categoría</th><th>Cliente</th><th>Destinatario</th><th>Comuna/Región</th>
-        <th>Courier / Guía</th><th class="num-cell">Costo</th><th class="num-cell">PV</th><th class="num-cell">Margen</th>
+        <th>Courier / Guía</th><th>Estado envío</th><th class="num-cell">Costo</th><th class="num-cell">PV</th><th class="num-cell">Margen</th>
         <th>Factura</th><th>Pago</th><th>Acciones</th>
       </tr></thead>
-      <tbody id="movimientosBody"><tr><td colspan="12" class="empty">Cargando...</td></tr></tbody>
+      <tbody id="movimientosBody"><tr><td colspan="13" class="empty">Cargando...</td></tr></tbody>
     </table>
   </section>
 
@@ -219,7 +219,10 @@
     </div>
 
     <div class="campos-envio" id="camposEnvio">
-      <div class="field"><label>Sub-Cliente / Destinatario final</label><input type="text" id="movSubCliente"></div>
+      <div class="field-row">
+        <div class="field"><label>Sub-Cliente / Destinatario final</label><input type="text" id="movSubCliente"></div>
+        <div class="field"><label>Email del destinatario (opcional)</label><input type="text" id="movSubClienteEmail" placeholder="para avisarle por correo"></div>
+      </div>
       <div class="field-row">
         <div class="field"><label>Dirección</label><input type="text" id="movDireccion"></div>
         <div class="field"><label>Depto / N° oficina</label><input type="text" id="movDepto"></div>
@@ -231,6 +234,11 @@
       <div class="field-row">
         <div class="field"><label>Courier</label><select id="movCourier"></select></div>
         <div class="field"><label>N° de guía</label><input type="text" id="movGuia"></div>
+      </div>
+      <div class="field">
+        <label>Estado del envío</label>
+        <select id="movEstadoEnvio"></select>
+        <div class="muted">Al guardar un cambio de estado (excepto "Preparando") se avisa por correo automáticamente al cliente y/o destinatario, si tienen email registrado.</div>
       </div>
     </div>
 
@@ -322,6 +330,9 @@ function poblarSelectsConfig(){
   document.getElementById('filtroPago').innerHTML = '<option value="">Todos los estados de pago</option>' +
     estadosPago.map(e => `<option value="${e}">${e}</option>`).join('');
 
+  const estadosEnvio = DATA.config.estadosEnvio || [];
+  document.getElementById('movEstadoEnvio').innerHTML = estadosEnvio.map(e => `<option value="${e}">${e}</option>`).join('');
+
   document.getElementById('listaClientes').innerHTML = DATA.clientes.map(c => `<option value="${c.Nombre}">`).join('');
 
   actualizarCamposPorCategoria();
@@ -403,10 +414,11 @@ function abrirModalMovimiento(){
   modoEdicion = false;
   document.getElementById('movModalTitulo').textContent = 'Nuevo movimiento';
   document.getElementById('movId').value = '';
-  ['movSubCliente','movDireccion','movDepto','movComuna','movRegion','movGuia','movDescripcion','movCosto','movPv','movFactura','movObservaciones','movCliente'].forEach(id => document.getElementById(id).value = '');
+  ['movSubCliente','movSubClienteEmail','movDireccion','movDepto','movComuna','movRegion','movGuia','movDescripcion','movCosto','movPv','movFactura','movObservaciones','movCliente'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('movFecha').value = new Date().toISOString().slice(0,10);
   document.getElementById('movMargenPreview').value = '';
   actualizarCamposPorCategoria();
+  document.getElementById('movEstadoEnvio').value = 'Preparando';
   abrirModal('modalMovimiento');
 }
 
@@ -422,12 +434,14 @@ function editarMovimiento(id){
   document.getElementById('movTipo').value = m.Tipo || '';
   document.getElementById('movCliente').value = m.Cliente || '';
   document.getElementById('movSubCliente').value = m.Sub_Cliente || '';
+  document.getElementById('movSubClienteEmail').value = m.Sub_Cliente_Email || '';
   document.getElementById('movDireccion').value = m.Direccion || '';
   document.getElementById('movDepto').value = m.Depto_Oficina || '';
   document.getElementById('movComuna').value = m.Comuna || '';
   document.getElementById('movRegion').value = m.Region_Pais || '';
   document.getElementById('movCourier').value = m.Courier || '';
   document.getElementById('movGuia').value = m.Numero_Guia || '';
+  document.getElementById('movEstadoEnvio').value = m.Estado_Envio || 'Preparando';
   document.getElementById('movDescripcion').value = m.Descripcion || '';
   document.getElementById('movCosto').value = m.Costo_Neto || '';
   document.getElementById('movPv').value = m.PV_Neto || '';
@@ -452,9 +466,14 @@ function renderMovimientos(){
   ).sort((a,b) => (b.Fecha || '').localeCompare(a.Fecha || ''));
 
   const body = document.getElementById('movimientosBody');
-  if (list.length === 0) { body.innerHTML = '<tr><td colspan="12" class="empty">No hay movimientos que coincidan</td></tr>'; return; }
+  if (list.length === 0) { body.innerHTML = '<tr><td colspan="13" class="empty">No hay movimientos que coincidan</td></tr>'; return; }
 
-  body.innerHTML = list.map(m => `
+  const secuenciaEnvio = DATA.config.estadosEnvio || [];
+
+  body.innerHTML = list.map(m => {
+    const esEnvio = m.Categoria === 'Envio';
+    const tieneEmail = !!(buscarEmailClienteLocal(m.Cliente) || m.Sub_Cliente_Email);
+    return `
     <tr>
       <td>${m.Fecha || ''}</td>
       <td>${badgeCategoria(m.Categoria)}<div class="muted">${escapeHtml(m.Tipo)}</div></td>
@@ -462,6 +481,7 @@ function renderMovimientos(){
       <td>${escapeHtml(m.Sub_Cliente)}</td>
       <td>${escapeHtml(m.Comuna)}${m.Region_Pais ? ', ' + escapeHtml(m.Region_Pais) : ''}</td>
       <td>${escapeHtml(m.Courier)}<br>${trackingLink(m.Courier, m.Numero_Guia)}</td>
+      <td>${esEnvio ? badgeEstadoEnvio(m.Estado_Envio) : '<span class="muted">-</span>'}</td>
       <td class="num-cell">${formatCLP(m.Costo_Neto)}</td>
       <td class="num-cell">${formatCLP(m.PV_Neto)}</td>
       <td class="num-cell">${(Number(m.Margen_Pct)||0).toFixed(1)}%</td>
@@ -470,9 +490,17 @@ function renderMovimientos(){
       <td class="row-actions">
         <button class="secondary" onclick="editarMovimiento('${m.ID}')">Editar</button>
         ${m.Estado_Pago !== 'Pagada' ? `<button class="secondary" onclick="marcarPagado('${m.ID}')">Marcar pagado</button>` : ''}
+        ${esEnvio && m.Estado_Envio !== 'Entregado' ? `<button class="secondary" onclick="avanzarEstadoEnvio('${m.ID}','${m.Estado_Envio || 'Preparando'}')">Avanzar estado</button>` : ''}
+        ${esEnvio ? `<button class="secondary" onclick="notificarCliente('${m.ID}')" ${tieneEmail ? '' : 'disabled title="Sin email registrado"'}>Notificar</button>` : ''}
         <button class="danger" onclick="eliminarMovimiento('${m.ID}')">Eliminar</button>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
+}
+
+function buscarEmailClienteLocal(nombreCliente){
+  const c = DATA.clientes.find(x => x.Nombre === nombreCliente);
+  return c ? c.Email : '';
 }
 
 function guardarMovimiento(){
@@ -484,6 +512,7 @@ function guardarMovimiento(){
     tipo: document.getElementById('movTipo').value,
     cliente: document.getElementById('movCliente').value,
     subCliente: document.getElementById('movSubCliente').value,
+    subClienteEmail: document.getElementById('movSubClienteEmail').value,
     direccion: document.getElementById('movDireccion').value,
     deptoOficina: document.getElementById('movDepto').value,
     comuna: document.getElementById('movComuna').value,
@@ -497,14 +526,47 @@ function guardarMovimiento(){
     estadoPago: document.getElementById('movEstadoPago').value,
     observaciones: document.getElementById('movObservaciones').value
   };
+  if (body.categoria === 'Envio') {
+    body.estadoEnvio = document.getElementById('movEstadoEnvio').value || 'Preparando';
+  }
   if (modoEdicion) body.id = id;
 
   if (!body.cliente || !body.categoria) { toast('Cliente y categoría son obligatorios', true); return; }
 
-  enviarAccion(body, () => {
+  enviarAccion(body, (resp) => {
     cerrarModal('modalMovimiento');
     toast(modoEdicion ? 'Movimiento actualizado' : 'Movimiento registrado');
+    avisarResultadoCorreo(resp);
   });
+}
+
+function avanzarEstadoEnvio(id, estadoActual){
+  const secuencia = DATA.config.estadosEnvio || [];
+  const idx = secuencia.indexOf(estadoActual);
+  const siguiente = secuencia[idx + 1] || estadoActual;
+  enviarAccion({ action: 'updateMovimiento', id, estadoEnvio: siguiente }, (resp) => {
+    toast('Estado actualizado a "' + siguiente + '"');
+    avisarResultadoCorreo(resp);
+  });
+}
+
+function notificarCliente(id){
+  enviarAccion({ action: 'notificarCliente', id }, (resp) => {
+    avisarResultadoCorreo(resp, true);
+  });
+}
+
+function avisarResultadoCorreo(resp, esManual){
+  const correo = resp && resp.data && resp.data.correo;
+  if (!correo) {
+    if (esManual) toast('No se pudo enviar: revisa que el estado exista', true);
+    return;
+  }
+  if (correo.enviado) {
+    toast('Correo enviado a: ' + (correo.destinatarios || []).join(', '));
+  } else if (esManual) {
+    toast('No se envió correo: ' + (correo.motivo || 'sin destinatarios con email'), true);
+  }
 }
 
 function marcarPagado(id){
@@ -577,7 +639,7 @@ function enviarAccion(body, onSuccess){
     renderDashboard();
     renderMovimientos();
     renderClientes();
-    if (onSuccess) onSuccess();
+    if (onSuccess) onSuccess(json);
   })
   .catch(err => toast('Error de conexión: ' + err, true));
 }
@@ -599,6 +661,11 @@ function badgeCategoria(cat){
 function badgePago(estado){
   const map = { 'Por Cobrar':'red', 'Parcial':'amber', 'Pagada':'green' };
   return `<span class="badge ${map[estado] || 'gray'}">${estado || ''}</span>`;
+}
+function badgeEstadoEnvio(estado){
+  const map = { 'Preparando':'gray', 'Despachado':'blue', 'En Transito':'blue', 'En Aduana':'amber', 'Entregado':'green' };
+  const val = estado || 'Preparando';
+  return `<span class="badge ${map[val] || 'gray'}">${val}</span>`;
 }
 function formatCLP(n){
   const num = Number(n) || 0;
