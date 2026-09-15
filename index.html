@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestor MBE Quilicura</title>
+<style>
+  :root{
+    --navy:#0b2545;
+    --navy-dark:#081a33;
+    --red:#d81e2c;
+    --bg:#f4f6f9;
+    --card:#ffffff;
+    --border:#dde3ea;
+    --text:#1c2733;
+    --muted:#6b7684;
+    --green:#1a8a4a;
+    --amber:#c98a12;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);}
+  header{background:var(--navy);color:#fff;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;}
+  header .brand{display:flex;align-items:center;gap:12px;}
+  header .brand .logo{background:var(--red);color:#fff;font-weight:800;padding:6px 10px;border-radius:6px;font-size:14px;letter-spacing:0.5px;}
+  header h1{font-size:18px;margin:0;font-weight:600;}
+  header .sub{font-size:12px;color:#c7d2e0;margin-top:2px;}
+  header .status{font-size:12px;color:#c7d2e0;display:flex;align-items:center;gap:8px;}
+  header button.refresh{background:var(--navy-dark);border:1px solid #24406b;color:#fff;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;}
+  header button.refresh:hover{background:#12305c;}
+
+  nav{background:#fff;border-bottom:1px solid var(--border);display:flex;padding:0 24px;gap:4px;overflow-x:auto;}
+  nav button{background:none;border:none;padding:14px 16px;font-size:14px;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;}
+  nav button.active{color:var(--navy);border-bottom-color:var(--red);font-weight:600;}
+  nav button:hover{color:var(--navy);}
+
+  main{padding:20px 24px;max-width:1400px;margin:0 auto;}
+  .view{display:none;}
+  .view.active{display:block;}
+
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:22px;}
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;}
+  .kpi .num{font-size:26px;font-weight:700;color:var(--navy);}
+  .kpi .label{font-size:12px;color:var(--muted);margin-top:4px;}
+
+  .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:wrap;}
+  .toolbar .filters{display:flex;gap:8px;flex-wrap:wrap;}
+  select,input[type=text],input[type=number],input[type=date],textarea{
+    border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;font-family:inherit;background:#fff;color:var(--text);
+  }
+  textarea{width:100%;resize:vertical;}
+  button.primary{background:var(--red);color:#fff;border:none;padding:9px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:600;}
+  button.primary:hover{background:#b8121f;}
+  button.secondary{background:#fff;border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:6px;font-size:13px;cursor:pointer;}
+  button.secondary:hover{background:#f0f2f5;}
+  button.link{background:none;border:none;color:var(--navy);text-decoration:underline;cursor:pointer;font-size:12px;padding:0;}
+
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:13px;}
+  thead th{background:#eef1f6;text-align:left;padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;color:var(--muted);border-bottom:1px solid var(--border);}
+  tbody td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:#fafbfd;}
+  .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;}
+  .badge.gray{background:#e9ecef;color:#495057;}
+  .badge.blue{background:#e3ecfb;color:#1d4fa3;}
+  .badge.amber{background:#fbf0dc;color:var(--amber);}
+  .badge.green{background:#e1f4e8;color:var(--green);}
+  .badge.red{background:#fbe3e5;color:var(--red);}
+  .row-actions{display:flex;gap:6px;flex-wrap:wrap;}
+  .row-actions button{font-size:11px;padding:5px 9px;}
+  .empty{padding:30px;text-align:center;color:var(--muted);}
+
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(10,20,35,0.5);align-items:center;justify-content:center;z-index:100;}
+  .modal-overlay.active{display:flex;}
+  .modal{background:#fff;border-radius:12px;padding:24px;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;}
+  .modal h2{margin:0 0 16px;font-size:17px;color:var(--navy);}
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600;}
+  .field select,.field input,.field textarea{width:100%;}
+  .field-row{display:flex;gap:10px;}
+  .field-row .field{flex:1;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;}
+  .toast{position:fixed;bottom:20px;right:20px;background:var(--navy);color:#fff;padding:12px 18px;border-radius:8px;font-size:13px;z-index:200;display:none;box-shadow:0 4px 14px rgba(0,0,0,0.2);}
+  .toast.error{background:var(--red);}
+  .muted{color:var(--muted);font-size:12px;}
+  a.tracklink{color:var(--navy);font-weight:600;text-decoration:none;}
+  a.tracklink:hover{text-decoration:underline;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="logo">MBE</div>
+    <div>
+      <h1>Gestor MBE Quilicura</h1>
+      <div class="sub">Casilleros · Paquetes · Envíos</div>
+    </div>
+  </div>
+  <div class="status">
+    <span id="lastSync">Cargando...</span>
+    <button class="refresh" onclick="cargarDatos(true)">Actualizar</button>
+  </div>
+</header>
+
+<nav>
+  <button class="tab-btn active" data-view="dashboard">Dashboard</button>
+  <button class="tab-btn" data-view="casilleros">Casilleros</button>
+  <button class="tab-btn" data-view="paquetes">Paquetes</button>
+  <button class="tab-btn" data-view="envios">Envíos</button>
+</nav>
+
+<main>
+
+  <!-- DASHBOARD -->
+  <section id="view-dashboard" class="view active">
+    <div class="kpis">
+      <div class="kpi"><div class="num" id="kpiCasilleros">-</div><div class="label">Casilleros registrados</div></div>
+      <div class="kpi"><div class="num" id="kpiEnBodega">-</div><div class="label">Paquetes en bodega</div></div>
+      <div class="kpi"><div class="num" id="kpiPorNotificar">-</div><div class="label">Por notificar</div></div>
+      <div class="kpi"><div class="num" id="kpiEnTransito">-</div><div class="label">Envíos en tránsito</div></div>
+      <div class="kpi"><div class="num" id="kpiEntregados">-</div><div class="label">Entregados</div></div>
+      <div class="kpi"><div class="num" id="kpiPendientePago">-</div><div class="label">Pendiente de cobro (CLP)</div></div>
+    </div>
+    <h2 style="font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Últimos paquetes recibidos</h2>
+    <table>
+      <thead><tr><th>ID</th><th>Cliente</th><th>Descripción</th><th>Recepción</th><th>Estado</th></tr></thead>
+      <tbody id="dashboardPaquetesBody"><tr><td colspan="5" class="empty">Cargando...</td></tr></tbody>
+    </table>
+  </section>
+
+  <!-- CASILLEROS -->
+  <section id="view-casilleros" class="view">
+    <div class="toolbar">
+      <div class="filters">
+        <input type="text" id="filtroCasillero" placeholder="Buscar por nombre o email..." oninput="renderCasilleros()">
+      </div>
+      <button class="primary" onclick="abrirModal('modalCasillero')">+ Nuevo casillero</button>
+    </div>
+    <table>
+      <thead><tr><th>ID</th><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Dirección de entrega</th><th>Ciudad</th><th>Registrado</th></tr></thead>
+      <tbody id="casillerosBody"><tr><td colspan="7" class="empty">Cargando...</td></tr></tbody>
+    </table>
+  </section>
+
+  <!-- PAQUETES -->
+  <section id="view-paquetes" class="view">
+    <div class="toolbar">
+      <div class="filters">
+        <select id="filtroPaqueteEstado" onchange="renderPaquetes()">
+          <option value="">Todos los estados</option>
+        </select>
+        <input type="text" id="filtroPaqueteTexto" placeholder="Buscar cliente o descripción..." oninput="renderPaquetes()">
+      </div>
+      <button class="primary" onclick="abrirModalPaquete()">+ Registrar paquete recibido</button>
+    </div>
+    <table>
+      <thead><tr><th>ID</th><th>Cliente</th><th>Descripción</th><th>Origen</th><th>Tracking entrada</th><th>Recepción</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <tbody id="paquetesBody"><tr><td colspan="8" class="empty">Cargando...</td></tr></tbody>
+    </table>
+  </section>
+
+  <!-- ENVIOS -->
+  <section id="view-envios" class="view">
+    <div class="toolbar">
+      <div class="filters">
+        <select id="filtroEnvioEstado" onchange="renderEnvios()">
+          <option value="">Todos los estados de envío</option>
+        </select>
+        <select id="filtroEnvioPago" onchange="renderEnvios()">
+          <option value="">Todos los estados de pago</option>
+        </select>
+      </div>
+      <button class="primary" onclick="abrirModalEnvio()">+ Nuevo envío</button>
+    </div>
+    <table>
+      <thead><tr><th>ID</th><th>Cliente</th><th>Destino</th><th>Courier</th><th>Guía</th><th>Costo</th><th>Pago</th><th>Estado envío</th><th>Acciones</th></tr></thead>
+      <tbody id="enviosBody"><tr><td colspan="9" class="empty">Cargando...</td></tr></tbody>
+    </table>
+  </section>
+
+</main>
+
+<!-- MODAL: NUEVO CASILLERO -->
+<div class="modal-overlay" id="modalCasillero">
+  <div class="modal">
+    <h2>Nuevo casillero</h2>
+    <div class="field"><label>Nombre</label><input type="text" id="cNombre"></div>
+    <div class="field-row">
+      <div class="field"><label>Email</label><input type="text" id="cEmail"></div>
+      <div class="field"><label>Teléfono</label><input type="text" id="cTelefono"></div>
+    </div>
+    <div class="field"><label>Dirección de entrega</label><input type="text" id="cDireccion"></div>
+    <div class="field"><label>Ciudad</label><input type="text" id="cCiudad" placeholder="Quilicura, Santiago, etc."></div>
+    <div class="field"><label>Notas</label><textarea id="cNotas" rows="2"></textarea></div>
+    <div class="modal-actions">
+      <button class="secondary" onclick="cerrarModal('modalCasillero')">Cancelar</button>
+      <button class="primary" onclick="guardarCasillero()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: NUEVO PAQUETE -->
+<div class="modal-overlay" id="modalPaquete">
+  <div class="modal">
+    <h2>Registrar paquete recibido en bodega</h2>
+    <div class="field">
+      <label>Casillero (opcional)</label>
+      <select id="pCasillero"><option value="">-- Cliente ocasional / sin casillero --</option></select>
+    </div>
+    <div class="field"><label>Nombre del cliente</label><input type="text" id="pCliente"></div>
+    <div class="field"><label>Descripción del contenido</label><input type="text" id="pDescripcion"></div>
+    <div class="field-row">
+      <div class="field"><label>Tienda / origen</label><input type="text" id="pTienda" placeholder="Amazon, eBay, etc."></div>
+      <div class="field"><label>Courier de entrada</label>
+        <select id="pCourierEntrada"></select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Tracking de entrada</label><input type="text" id="pTrackingEntrada"></div>
+      <div class="field"><label>Peso (kg)</label><input type="number" step="0.01" id="pPeso"></div>
+    </div>
+    <div class="field"><label>Valor declarado (USD)</label><input type="number" step="0.01" id="pValor"></div>
+    <div class="field"><label>Notas</label><textarea id="pNotas" rows="2"></textarea></div>
+    <div class="modal-actions">
+      <button class="secondary" onclick="cerrarModal('modalPaquete')">Cancelar</button>
+      <button class="primary" onclick="guardarPaquete()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: NUEVO ENVIO -->
+<div class="modal-overlay" id="modalEnvio">
+  <div class="modal">
+    <h2>Nuevo envío</h2>
+    <div class="field">
+      <label>Paquete en bodega (opcional)</label>
+      <select id="ePaquete" onchange="autocompletarDesdeEnvio()"><option value="">-- Envío directo, sin paquete previo --</option></select>
+    </div>
+    <div class="field"><label>Nombre del cliente</label><input type="text" id="eCliente"></div>
+    <div class="field-row">
+      <div class="field"><label>Destino (ciudad/país)</label><input type="text" id="eDestino"></div>
+      <div class="field"><label>Dirección de destino</label><input type="text" id="eDireccion"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Courier</label><select id="eCourier"></select></div>
+      <div class="field"><label>Número de guía</label><input type="text" id="eGuia"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Costo de envío (CLP)</label><input type="number" id="eCosto"></div>
+      <div class="field"><label>Cobrado al cliente (CLP)</label><input type="number" id="eCobrado"></div>
+    </div>
+    <div class="field"><label>Fecha de entrega estimada</label><input type="date" id="eFechaEst"></div>
+    <div class="field"><label>Notas</label><textarea id="eNotas" rows="2"></textarea></div>
+    <div class="modal-actions">
+      <button class="secondary" onclick="cerrarModal('modalEnvio')">Cancelar</button>
+      <button class="primary" onclick="guardarEnvio()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ==== CONFIGURACION ====
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwmzEkAjD-vqdTeUPCv4TNGN95rq0hMnGTr2u9sGU1KqHQadm7b8gssDziqUschZUk/exec";
+const AUTO_REFRESH_MS = 120000; // 2 minutos
+
+let DATA = { casilleros: [], paquetes: [], envios: [], config: { couriers: [], estadosPaquete: [], estadosEnvio: [], estadosPago: [] } };
+
+// ==== NAVEGACION ====
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-' + btn.dataset.view).classList.add('active');
+  });
+});
+
+function abrirModal(id){ document.getElementById(id).classList.add('active'); }
+function cerrarModal(id){ document.getElementById(id).classList.remove('active'); }
+
+function toast(msg, isError){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isError ? ' error' : '');
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 3500);
+}
+
+// ==== CARGA DE DATOS ====
+function cargarDatos(manual){
+  document.getElementById('lastSync').textContent = 'Actualizando...';
+  fetch(SCRIPT_URL + '?action=getData')
+    .then(r => r.json())
+    .then(json => {
+      DATA = json;
+      poblarSelectsConfig();
+      renderDashboard();
+      renderCasilleros();
+      renderPaquetes();
+      renderEnvios();
+      const now = new Date();
+      document.getElementById('lastSync').textContent = 'Actualizado ' + now.toLocaleTimeString('es-CL');
+      if (manual) toast('Datos actualizados');
+    })
+    .catch(err => {
+      document.getElementById('lastSync').textContent = 'Error de conexión';
+      toast('No se pudo conectar con el backend: ' + err, true);
+    });
+}
+
+function poblarSelectsConfig(){
+  const couriers = DATA.config.couriers || [];
+  const courierOptions = couriers.map(c => `<option value="${c.Courier}">${c.Courier}</option>`).join('');
+  document.getElementById('pCourierEntrada').innerHTML = courierOptions;
+  document.getElementById('eCourier').innerHTML = courierOptions;
+
+  const estPaq = DATA.config.estadosPaquete || [];
+  document.getElementById('filtroPaqueteEstado').innerHTML = '<option value="">Todos los estados</option>' +
+    estPaq.map(e => `<option value="${e}">${e}</option>`).join('');
+
+  const estEnv = DATA.config.estadosEnvio || [];
+  document.getElementById('filtroEnvioEstado').innerHTML = '<option value="">Todos los estados de envío</option>' +
+    estEnv.map(e => `<option value="${e}">${e}</option>`).join('');
+
+  const estPago = DATA.config.estadosPago || [];
+  document.getElementById('filtroEnvioPago').innerHTML = '<option value="">Todos los estados de pago</option>' +
+    estPago.map(e => `<option value="${e}">${e}</option>`).join('');
+
+  const casOptions = '<option value="">-- Cliente ocasional / sin casillero --</option>' +
+    DATA.casilleros.map(c => `<option value="${c.ID}">${c.ID} - ${c.Nombre}</option>`).join('');
+  document.getElementById('pCasillero').innerHTML = casOptions;
+
+  const paqPendientes = DATA.paquetes.filter(p => p.Estado !== 'Despachado');
+  document.getElementById('ePaquete').innerHTML = '<option value="">-- Envío directo, sin paquete previo --</option>' +
+    paqPendientes.map(p => `<option value="${p.ID}">${p.ID} - ${p.Cliente_Nombre} (${p.Descripcion || ''})</option>`).join('');
+}
+
+function autocompletarDesdeEnvio(){
+  const id = document.getElementById('ePaquete').value;
+  if (!id) return;
+  const p = DATA.paquetes.find(x => x.ID === id);
+  if (!p) return;
+  document.getElementById('eCliente').value = p.Cliente_Nombre || '';
+  if (p.Casillero_ID) {
+    const cas = DATA.casilleros.find(c => c.ID === p.Casillero_ID);
+    if (cas) {
+      document.getElementById('eDestino').value = cas.Ciudad || '';
+      document.getElementById('eDireccion').value = cas.Direccion_Entrega || '';
+    }
+  }
+}
+
+// ==== DASHBOARD ====
+function renderDashboard(){
+  document.getElementById('kpiCasilleros').textContent = DATA.casilleros.length;
+  document.getElementById('kpiEnBodega').textContent = DATA.paquetes.filter(p => p.Estado === 'Recibido en Bodega' || p.Estado === 'Notificado al Cliente' || p.Estado === 'Listo para Despacho').length;
+  document.getElementById('kpiPorNotificar').textContent = DATA.paquetes.filter(p => p.Notificado !== 'Si').length;
+  document.getElementById('kpiEnTransito').textContent = DATA.envios.filter(e => e.Estado_Envio === 'En Transito' || e.Estado_Envio === 'En Aduana').length;
+  document.getElementById('kpiEntregados').textContent = DATA.envios.filter(e => e.Estado_Envio === 'Entregado').length;
+
+  const pendiente = DATA.envios
+    .filter(e => e.Estado_Pago !== 'Pagado')
+    .reduce((sum, e) => sum + ((Number(e.Cobrado_Cliente_CLP) || 0) - 0), 0);
+  document.getElementById('kpiPendientePago').textContent = formatCLP(pendiente);
+
+  const ultimos = [...DATA.paquetes].sort((a,b) => (b.Fecha_Recepcion || '').localeCompare(a.Fecha_Recepcion || '')).slice(0, 8);
+  const body = document.getElementById('dashboardPaquetesBody');
+  if (ultimos.length === 0) { body.innerHTML = '<tr><td colspan="5" class="empty">Sin paquetes registrados aún</td></tr>'; return; }
+  body.innerHTML = ultimos.map(p => `
+    <tr>
+      <td>${p.ID}</td>
+      <td>${escapeHtml(p.Cliente_Nombre)}</td>
+      <td>${escapeHtml(p.Descripcion)}</td>
+      <td>${p.Fecha_Recepcion || ''}</td>
+      <td>${badgePaquete(p.Estado)}</td>
+    </tr>`).join('');
+}
+
+// ==== CASILLEROS ====
+function renderCasilleros(){
+  const filtro = (document.getElementById('filtroCasillero').value || '').toLowerCase();
+  const list = DATA.casilleros.filter(c =>
+    !filtro || (c.Nombre || '').toLowerCase().includes(filtro) || (c.Email || '').toLowerCase().includes(filtro)
+  );
+  const body = document.getElementById('casillerosBody');
+  if (list.length === 0) { body.innerHTML = '<tr><td colspan="7" class="empty">No hay casilleros que coincidan</td></tr>'; return; }
+  body.innerHTML = list.map(c => `
+    <tr>
+      <td>${c.ID}</td>
+      <td>${escapeHtml(c.Nombre)}</td>
+      <td>${escapeHtml(c.Email)}</td>
+      <td>${escapeHtml(c.Telefono)}</td>
+      <td>${escapeHtml(c.Direccion_Entrega)}</td>
+      <td>${escapeHtml(c.Ciudad)}</td>
+      <td>${c.Fecha_Registro || ''}</td>
+    </tr>`).join('');
+}
+
+function guardarCasillero(){
+  const body = {
+    action: 'addCasillero',
+    nombre: document.getElementById('cNombre').value,
+    email: document.getElementById('cEmail').value,
+    telefono: document.getElementById('cTelefono').value,
+    direccion: document.getElementById('cDireccion').value,
+    ciudad: document.getElementById('cCiudad').value,
+    notas: document.getElementById('cNotas').value
+  };
+  if (!body.nombre) { toast('El nombre es obligatorio', true); return; }
+  enviarAccion(body, () => {
+    cerrarModal('modalCasillero');
+    ['cNombre','cEmail','cTelefono','cDireccion','cCiudad','cNotas'].forEach(id => document.getElementById(id).value = '');
+    toast('Casillero creado');
+  });
+}
+
+// ==== PAQUETES ====
+function abrirModalPaquete(){ abrirModal('modalPaquete'); }
+
+function renderPaquetes(){
+  const estadoF = document.getElementById('filtroPaqueteEstado').value;
+  const texto = (document.getElementById('filtroPaqueteTexto').value || '').toLowerCase();
+  const list = DATA.paquetes.filter(p =>
+    (!estadoF || p.Estado === estadoF) &&
+    (!texto || (p.Cliente_Nombre||'').toLowerCase().includes(texto) || (p.Descripcion||'').toLowerCase().includes(texto))
+  );
+  const body = document.getElementById('paquetesBody');
+  if (list.length === 0) { body.innerHTML = '<tr><td colspan="8" class="empty">No hay paquetes que coincidan</td></tr>'; return; }
+  body.innerHTML = list.map(p => `
+    <tr>
+      <td>${p.ID}</td>
+      <td>${escapeHtml(p.Cliente_Nombre)}</td>
+      <td>${escapeHtml(p.Descripcion)}</td>
+      <td>${escapeHtml(p.Tienda_Origen)}</td>
+      <td>${trackingLink(p.Courier_Entrada, p.Tracking_Entrada)}</td>
+      <td>${p.Fecha_Recepcion || ''}</td>
+      <td>${badgePaquete(p.Estado)}</td>
+      <td class="row-actions">
+        ${p.Notificado !== 'Si' ? `<button class="secondary" onclick="marcarNotificado('${p.ID}')">Notificar</button>` : ''}
+        ${p.Estado !== 'Despachado' ? `<button class="secondary" onclick="avanzarEstadoPaquete('${p.ID}','${p.Estado}')">Avanzar estado</button>` : ''}
+        ${p.Estado !== 'Despachado' ? `<button class="secondary" onclick="crearEnvioDesdePaquete('${p.ID}')">Crear envío</button>` : ''}
+      </td>
+    </tr>`).join('');
+}
+
+function guardarPaquete(){
+  const body = {
+    action: 'addPaquete',
+    casilleroId: document.getElementById('pCasillero').value,
+    clienteNombre: document.getElementById('pCliente').value,
+    descripcion: document.getElementById('pDescripcion').value,
+    tiendaOrigen: document.getElementById('pTienda').value,
+    courierEntrada: document.getElementById('pCourierEntrada').value,
+    trackingEntrada: document.getElementById('pTrackingEntrada').value,
+    pesoKg: document.getElementById('pPeso').value,
+    valorDeclarado: document.getElementById('pValor').value,
+    notas: document.getElementById('pNotas').value
+  };
+  if (!body.clienteNombre) { toast('El nombre del cliente es obligatorio', true); return; }
+  enviarAccion(body, () => {
+    cerrarModal('modalPaquete');
+    ['pCliente','pDescripcion','pTienda','pTrackingEntrada','pPeso','pValor','pNotas'].forEach(id => document.getElementById(id).value = '');
+    toast('Paquete registrado en bodega');
+  });
+}
+
+function marcarNotificado(id){
+  enviarAccion({ action: 'marcarNotificado', id }, () => toast('Cliente marcado como notificado'));
+}
+
+function avanzarEstadoPaquete(id, estadoActual){
+  const secuencia = DATA.config.estadosPaquete;
+  const idx = secuencia.indexOf(estadoActual);
+  const siguiente = secuencia[idx + 1] || estadoActual;
+  enviarAccion({ action: 'updatePaqueteEstado', id, estado: siguiente }, () => toast('Estado actualizado a "' + siguiente + '"'));
+}
+
+function crearEnvioDesdePaquete(id){
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelector('[data-view="envios"]').classList.add('active');
+  document.getElementById('view-envios').classList.add('active');
+  abrirModal('modalEnvio');
+  setTimeout(() => {
+    document.getElementById('ePaquete').value = id;
+    autocompletarDesdeEnvio();
+  }, 50);
+}
+
+// ==== ENVIOS ====
+function abrirModalEnvio(){ abrirModal('modalEnvio'); }
+
+function renderEnvios(){
+  const estadoF = document.getElementById('filtroEnvioEstado').value;
+  const pagoF = document.getElementById('filtroEnvioPago').value;
+  const list = DATA.envios.filter(e =>
+    (!estadoF || e.Estado_Envio === estadoF) && (!pagoF || e.Estado_Pago === pagoF)
+  );
+  const body = document.getElementById('enviosBody');
+  if (list.length === 0) { body.innerHTML = '<tr><td colspan="9" class="empty">No hay envíos que coincidan</td></tr>'; return; }
+  body.innerHTML = list.map(e => `
+    <tr>
+      <td>${e.ID}</td>
+      <td>${escapeHtml(e.Cliente_Nombre)}</td>
+      <td>${escapeHtml(e.Destino)}</td>
+      <td>${escapeHtml(e.Courier)}</td>
+      <td>${trackingLink(e.Courier, e.Numero_Guia)}</td>
+      <td>${formatCLP(e.Costo_Envio_CLP)}</td>
+      <td>${badgePago(e.Estado_Pago)}</td>
+      <td>${badgeEnvio(e.Estado_Envio)}</td>
+      <td class="row-actions">
+        ${e.Estado_Envio !== 'Entregado' ? `<button class="secondary" onclick="avanzarEstadoEnvio('${e.ID}','${e.Estado_Envio}')">Avanzar estado</button>` : ''}
+        ${e.Estado_Pago !== 'Pagado' ? `<button class="secondary" onclick="marcarPagado('${e.ID}')">Marcar pagado</button>` : ''}
+      </td>
+    </tr>`).join('');
+}
+
+function guardarEnvio(){
+  const body = {
+    action: 'addEnvio',
+    paqueteId: document.getElementById('ePaquete').value,
+    clienteNombre: document.getElementById('eCliente').value,
+    destino: document.getElementById('eDestino').value,
+    direccionDestino: document.getElementById('eDireccion').value,
+    courier: document.getElementById('eCourier').value,
+    numeroGuia: document.getElementById('eGuia').value,
+    costoEnvio: document.getElementById('eCosto').value,
+    cobradoCliente: document.getElementById('eCobrado').value,
+    fechaEntregaEstimada: document.getElementById('eFechaEst').value,
+    notas: document.getElementById('eNotas').value
+  };
+  const paq = DATA.paquetes.find(p => p.ID === body.paqueteId);
+  body.casilleroId = paq ? paq.Casillero_ID : '';
+  if (!body.clienteNombre || !body.courier) { toast('Cliente y courier son obligatorios', true); return; }
+  enviarAccion(body, () => {
+    cerrarModal('modalEnvio');
+    ['eCliente','eDestino','eDireccion','eGuia','eCosto','eCobrado','eFechaEst','eNotas'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('ePaquete').value = '';
+    toast('Envío creado');
+  });
+}
+
+function avanzarEstadoEnvio(id, estadoActual){
+  const secuencia = DATA.config.estadosEnvio;
+  const idx = secuencia.indexOf(estadoActual);
+  const siguiente = secuencia[idx + 1] || estadoActual;
+  enviarAccion({ action: 'updateEnvioEstado', id, estado: siguiente }, () => toast('Estado actualizado a "' + siguiente + '"'));
+}
+
+function marcarPagado(id){
+  enviarAccion({ action: 'marcarPago', id, estadoPago: 'Pagado' }, () => toast('Marcado como pagado'));
+}
+
+// ==== HELPERS ====
+function enviarAccion(body, onSuccess){
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(body)
+  })
+  .then(r => r.json())
+  .then(json => {
+    if (!json.ok) { toast('Error: ' + json.error, true); return; }
+    DATA = json.all;
+    poblarSelectsConfig();
+    renderDashboard();
+    renderCasilleros();
+    renderPaquetes();
+    renderEnvios();
+    if (onSuccess) onSuccess();
+  })
+  .catch(err => toast('Error de conexión: ' + err, true));
+}
+
+function trackingLink(courier, tracking){
+  if (!tracking) return '<span class="muted">-</span>';
+  const cfg = (DATA.config.couriers || []).find(c => c.Courier === courier);
+  if (cfg && cfg.Tracking_URL_Template) {
+    const url = cfg.Tracking_URL_Template.replace('{TRACKING}', encodeURIComponent(tracking));
+    return `<a class="tracklink" href="${url}" target="_blank" rel="noopener">${escapeHtml(tracking)}</a>`;
+  }
+  return escapeHtml(tracking);
+}
+
+function badgePaquete(estado){
+  const map = { 'Recibido en Bodega':'gray', 'Notificado al Cliente':'blue', 'Listo para Despacho':'amber', 'Despachado':'green' };
+  return `<span class="badge ${map[estado] || 'gray'}">${estado || ''}</span>`;
+}
+function badgeEnvio(estado){
+  const map = { 'Preparando':'gray', 'Despachado':'blue', 'En Transito':'blue', 'En Aduana':'amber', 'Entregado':'green' };
+  return `<span class="badge ${map[estado] || 'gray'}">${estado || ''}</span>`;
+}
+function badgePago(estado){
+  const map = { 'Pendiente':'red', 'Parcial':'amber', 'Pagado':'green' };
+  return `<span class="badge ${map[estado] || 'gray'}">${estado || ''}</span>`;
+}
+function formatCLP(n){
+  const num = Number(n) || 0;
+  return '$' + num.toLocaleString('es-CL');
+}
+function escapeHtml(str){
+  if (str === undefined || str === null) return '';
+  return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+// ==== INICIO ====
+cargarDatos(false);
+setInterval(() => cargarDatos(false), AUTO_REFRESH_MS);
+</script>
+</body>
+</html>
