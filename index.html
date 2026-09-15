@@ -593,7 +593,7 @@ function trackingLink(courier, tracking){
 }
 
 function badgeCategoria(cat){
-  const map = { 'Envio':'blue', 'Impresion':'amber', 'Servicio':'green' };
+  const map = { 'Envio':'blue', 'Impresion':'amber', 'Servicio':'green', 'Producto':'gray' };
   return `<span class="badge ${map[cat] || 'gray'}">${cat || ''}</span>`;
 }
 function badgePago(estado){
